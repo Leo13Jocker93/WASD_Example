@@ -16,12 +16,12 @@ public class CameraController : MonoBehaviour
 
     private float yaw;
     private float pitch;
-    private PlayerController playerController;
+    private New_CharacterController playerController;
     private Transform mainCamera;
 
     void Start()
     {
-        playerController = player.GetComponent<PlayerController>();
+        playerController = player.GetComponent<New_CharacterController>();
         mainCamera = Camera.main.transform;
         Cursor.lockState = CursorLockMode.Locked;
     }
