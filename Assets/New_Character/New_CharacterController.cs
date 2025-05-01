@@ -105,7 +105,8 @@ public class New_CharacterController : MonoBehaviour
         animator?.SetFloat("VerticalSpeed", Velocity.y);
     }
 
-
-
-
+    public void SetExternalVelocity (Vector3 platformVelocity)
+    {
+        externalVelocity = platformVelocity;
+    }
 }

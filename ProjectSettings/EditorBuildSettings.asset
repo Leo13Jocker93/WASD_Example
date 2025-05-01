@@ -8,5 +8,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/PlatoformerGame.unity
     guid: 37a80b861b831024cb61395034afc0ba
+  - enabled: 1
+    path: Assets/Scenes/Class.unity
+    guid: 905b06869731f564181a86ae2a1b5738
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0
