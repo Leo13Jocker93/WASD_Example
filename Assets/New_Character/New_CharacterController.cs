@@ -1,4 +1,3 @@
-//using Unity.Android.Gradle.Manifest;
 using UnityEngine;
 
 public class New_CharacterController : MonoBehaviour
@@ -39,10 +38,20 @@ public class New_CharacterController : MonoBehaviour
     public bool IsGrounded { get; private set; }
     public float CurrentYaw => yaw;
 
+    private bool turningLeft = false;
+    private bool turningRight = false;
+    private float turnResetTimer = 0f;
+    private const float turnResetDelay = 0.1f;
+
+    // Nuevo: rotación suave
+    private Quaternion targetRotation;
+    private bool isTurning = false;
+
     private void Start()
     {
         characterController = GetComponent<CharacterController>();
         Cursor.lockState = CursorLockMode.Locked;
+        targetRotation = transform.rotation;
 
         if (combatController == null)
         {
@@ -56,12 +65,11 @@ public class New_CharacterController : MonoBehaviour
         float vertical = Input.GetAxis("Vertical");
         CurrentInput = new Vector2(horizontal, vertical);
 
-        // Manejo de layers según estado de combate
-        bool shouldBeInCombat = combatController.IsInCombatMode();
-        float targetWeight = shouldBeInCombat ? 1f : 0f;
+        // Combate: Activación de capa
+        float targetWeight = combatController.IsInCombatMode() ? 1f : 0f;
         float currentWeight = animator.GetLayerWeight(combatLayerIndex);
         animator.SetLayerWeight(combatLayerIndex, Mathf.Lerp(currentWeight, targetWeight, Time.deltaTime * 5f));
-        animator.SetBool("IsInCombatMode", shouldBeInCombat);
+        animator.SetBool("IsInCombatMode", targetWeight > 0f);
 
         if (Input.GetButtonDown("Jump"))
         {
@@ -76,6 +84,33 @@ public class New_CharacterController : MonoBehaviour
         else
         {
             jumpRequested = false;
+        }
+
+        // Giros suaves en idle
+        if (Input.GetKeyDown(KeyCode.A) && !isTurning && !IsMoving)
+        {
+            targetRotation *= Quaternion.Euler(0f, -90f, 0f);
+            turningLeft = true;
+            isTurning = true;
+            turnResetTimer = turnResetDelay;
+        }
+
+        if (Input.GetKeyDown(KeyCode.D) && !isTurning && !IsMoving)
+        {
+            targetRotation *= Quaternion.Euler(0f, 90f, 0f);
+            turningRight = true;
+            isTurning = true;
+            turnResetTimer = turnResetDelay;
+        }
+
+        if (turnResetTimer > 0f)
+        {
+            turnResetTimer -= Time.deltaTime;
+            if (turnResetTimer <= 0f)
+            {
+                turningLeft = false;
+                turningRight = false;
+            }
         }
     }
 
@@ -139,22 +174,56 @@ public class New_CharacterController : MonoBehaviour
 
         if (IsMoving)
         {
-            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(0f, yaw, 0f), rotationSpeed * Time.deltaTime);
+            Quaternion moveRotation = Quaternion.Euler(0f, yaw, 0f);
+            transform.rotation = Quaternion.Slerp(transform.rotation, moveRotation, rotationSpeed * Time.deltaTime);
+            targetRotation = transform.rotation;
+            isTurning = false;
+        }
+        else if (isTurning)
+        {
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * 20f * Time.deltaTime);
+
+            if (Quaternion.Angle(transform.rotation, targetRotation) < 0.5f)
+            {
+                transform.rotation = targetRotation;
+                isTurning = false;
+            }
         }
     }
 
     void UpdateAnimator()
     {
-        float speedParam = 0f;
-        float verticalInput = Input.GetAxis("Vertical");
-        bool isSprinting = Input.GetKey(KeyCode.LeftShift);
+        float horizontalParam = 0f;
+        float verticalParam = 0f;
 
-        if (Mathf.Abs(verticalInput) > 0.1f)
+        if (turningLeft)
+            horizontalParam = -0.5f;
+        else if (turningRight)
+            horizontalParam = 0.5f;
+        else
+            horizontalParam = Mathf.Clamp(CurrentInput.x, -1f, 1f);
+
+        verticalParam = Mathf.Clamp(CurrentInput.y, -1f, 1f);
+
+        bool isSprinting = Input.GetKey(KeyCode.LeftShift);
+        if (isSprinting && verticalParam > 0f)
+            verticalParam = 1f;
+        else if (verticalParam > 0f)
+            verticalParam = 0.5f;
+        else if (verticalParam < 0f)
+            verticalParam = -0.5f;
+        else
+            verticalParam = 0f;
+
+        if (!turningLeft && !turningRight)
         {
-            speedParam = verticalInput < 0 ? -1f : (isSprinting ? 2f : 1f);
+            if (horizontalParam > 0f) horizontalParam = 0.5f;
+            else if (horizontalParam < 0f) horizontalParam = -0.5f;
+            else horizontalParam = 0f;
         }
 
-        animator?.SetFloat("Speed", speedParam, 0.1f, Time.deltaTime);
+        animator?.SetFloat("Horizontal", horizontalParam, 0.1f, Time.deltaTime);
+        animator?.SetFloat("Vertical", verticalParam, 0.1f, Time.deltaTime);
         animator?.SetBool("IsGrounded", IsGrounded);
         animator?.SetFloat("VerticalSpeed", velocity.y);
     }
