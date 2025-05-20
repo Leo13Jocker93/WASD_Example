@@ -129,16 +129,45 @@ public class CombatController : MonoBehaviour
     {
         isInCombatMode = true;
         combatModeTimer = combatModeDuration;
+
+        if (animator != null)
+        {
+            StartCoroutine(TransitionLayerWeight(1, 1f, 0.3f)); // Transición suave al modo combate
+        }
+
+        Debug.Log("Entrando en modo combate.");
     }
 
     void ExitCombatMode()
     {
         isInCombatMode = false;
+
+        if (animator != null)
+        {
+            StartCoroutine(TransitionLayerWeight(1, 0f, 0.3f)); // Transición suave al modo normal
+        }
+
         Debug.Log("Saliendo del modo combate.");
     }
 
     public bool IsInCombatMode()
     {
         return isInCombatMode;
+    }
+
+    IEnumerator TransitionLayerWeight(int layerIndex, float targetWeight, float duration)
+    {
+        float startWeight = animator.GetLayerWeight(layerIndex);
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float newWeight = Mathf.Lerp(startWeight, targetWeight, elapsed / duration);
+            animator.SetLayerWeight(layerIndex, newWeight);
+            yield return null;
+        }
+
+        animator.SetLayerWeight(layerIndex, targetWeight);
     }
 }

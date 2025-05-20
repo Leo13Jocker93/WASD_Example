@@ -87,30 +87,25 @@ public class New_CharacterController : MonoBehaviour
         }
 
         // Giros suaves en idle
-        if (Input.GetKeyDown(KeyCode.A) && !isTurning && !IsMoving)
+        if (Input.GetKey(KeyCode.A) && !isTurning && !IsMoving && turnResetTimer <= 0f)
         {
             targetRotation *= Quaternion.Euler(0f, -90f, 0f);
             turningLeft = true;
+            turningRight = false;
             isTurning = true;
-            turnResetTimer = turnResetDelay;
         }
 
-        if (Input.GetKeyDown(KeyCode.D) && !isTurning && !IsMoving)
+        if (Input.GetKey(KeyCode.D) && !isTurning && !IsMoving && turnResetTimer <= 0f)
         {
             targetRotation *= Quaternion.Euler(0f, 90f, 0f);
             turningRight = true;
+            turningLeft = false;
             isTurning = true;
-            turnResetTimer = turnResetDelay;
         }
 
         if (turnResetTimer > 0f)
         {
             turnResetTimer -= Time.deltaTime;
-            if (turnResetTimer <= 0f)
-            {
-                turningLeft = false;
-                turningRight = false;
-            }
         }
     }
 
@@ -178,6 +173,8 @@ public class New_CharacterController : MonoBehaviour
             transform.rotation = Quaternion.Slerp(transform.rotation, moveRotation, rotationSpeed * Time.deltaTime);
             targetRotation = transform.rotation;
             isTurning = false;
+            turningLeft = false;
+            turningRight = false;
         }
         else if (isTurning)
         {
@@ -187,6 +184,9 @@ public class New_CharacterController : MonoBehaviour
             {
                 transform.rotation = targetRotation;
                 isTurning = false;
+                turnResetTimer = turnResetDelay;
+                turningLeft = false;
+                turningRight = false;
             }
         }
     }
@@ -196,9 +196,9 @@ public class New_CharacterController : MonoBehaviour
         float horizontalParam = 0f;
         float verticalParam = 0f;
 
-        if (turningLeft)
+        if (isTurning && turningLeft)
             horizontalParam = -0.5f;
-        else if (turningRight)
+        else if (isTurning && turningRight)
             horizontalParam = 0.5f;
         else
             horizontalParam = Mathf.Clamp(CurrentInput.x, -1f, 1f);
@@ -209,23 +209,27 @@ public class New_CharacterController : MonoBehaviour
         if (isSprinting && verticalParam > 0f)
             verticalParam = 1f;
         else if (verticalParam > 0f)
-            verticalParam = 0.5f;
+            verticalParam = 0.5f; // Walk forward
         else if (verticalParam < 0f)
-            verticalParam = -0.5f;
+            verticalParam = -0.5f; // Walk backward
         else
-            verticalParam = 0f;
+            verticalParam = 0f; // Idle
 
-        if (!turningLeft && !turningRight)
+        if (!isTurning)
         {
             if (horizontalParam > 0f) horizontalParam = 0.5f;
             else if (horizontalParam < 0f) horizontalParam = -0.5f;
             else horizontalParam = 0f;
         }
 
+        // Always update Base_Layer parameters to ensure walking animation plays
         animator?.SetFloat("Horizontal", horizontalParam, 0.1f, Time.deltaTime);
         animator?.SetFloat("Vertical", verticalParam, 0.1f, Time.deltaTime);
         animator?.SetBool("IsGrounded", IsGrounded);
         animator?.SetFloat("VerticalSpeed", velocity.y);
+        animator?.SetBool("IsInCombatMode", combatController.IsInCombatMode());
+
+        // CombatLayer weight is managed by CombatController, no need to set it here
     }
 
     public void SetExternalVelocity(Vector3 platformVelocity)
