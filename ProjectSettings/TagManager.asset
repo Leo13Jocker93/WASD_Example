@@ -7,6 +7,9 @@ TagManager:
   - MovingPlatform
   - DeadZone
   - Collectible
+  - Deteccion
+  - deteccion
+  - Destroy
   layers:
   - Default
   - TransparentFX
