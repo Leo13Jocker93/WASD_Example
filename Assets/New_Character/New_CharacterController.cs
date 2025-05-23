@@ -36,6 +36,7 @@ public class New_CharacterController : MonoBehaviour
     public bool IsMoving { get; private set; }
     public Vector2 CurrentInput { get; private set; }
     public bool IsGrounded { get; private set; }
+    public bool IsRunning { get; private set; }
     public float CurrentYaw => yaw;
 
     private bool turningLeft = false;
@@ -206,6 +207,7 @@ public class New_CharacterController : MonoBehaviour
         verticalParam = Mathf.Clamp(CurrentInput.y, -1f, 1f);
 
         bool isSprinting = Input.GetKey(KeyCode.LeftShift);
+        IsRunning = isSprinting && verticalParam > 0.1f;
         if (isSprinting && verticalParam > 0f)
             verticalParam = 1f;
         else if (verticalParam > 0f)
@@ -222,14 +224,13 @@ public class New_CharacterController : MonoBehaviour
             else horizontalParam = 0f;
         }
 
-        // Always update Base_Layer parameters to ensure walking animation plays
+        // Siempre actualuza el base layer
         animator?.SetFloat("Horizontal", horizontalParam, 0.1f, Time.deltaTime);
         animator?.SetFloat("Vertical", verticalParam, 0.1f, Time.deltaTime);
         animator?.SetBool("IsGrounded", IsGrounded);
         animator?.SetFloat("VerticalSpeed", velocity.y);
         animator?.SetBool("IsInCombatMode", combatController.IsInCombatMode());
-
-        // CombatLayer weight is managed by CombatController, no need to set it here
+        animator?.SetBool("IsRunning", IsRunning);        
     }
 
     public void SetExternalVelocity(Vector3 platformVelocity)
