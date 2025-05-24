@@ -23,7 +23,13 @@ public class New_CharacterController : MonoBehaviour
     [SerializeField] private Animator animator;
     [SerializeField] private int combatLayerIndex = 1;
     [SerializeField] private CombatController combatController;
+    private float originalHeight;
+    private Vector3 originalCenter;
 
+    [Header("Slide")]
+    public float sliderDuration = 1.5f;
+    private float slideTimer;
+    private bool isSliding = false;
     private CharacterController characterController;
     private Vector3 velocity;
     private float currentSpeed;
@@ -53,6 +59,9 @@ public class New_CharacterController : MonoBehaviour
         characterController = GetComponent<CharacterController>();
         Cursor.lockState = CursorLockMode.Locked;
         targetRotation = transform.rotation;
+
+        originalHeight = characterController.height;
+        originalCenter = characterController.center;
 
         if (combatController == null)
         {
@@ -104,9 +113,29 @@ public class New_CharacterController : MonoBehaviour
             isTurning = true;
         }
 
+        if (Input.GetKeyDown(KeyCode.X) && IsGrounded && IsRunning && !isSliding)
+        {
+            animator.SetTrigger("Slide");
+            isSliding = true;
+            slideTimer = sliderDuration;
+            characterController.height = 1.0f; // más bajo
+            characterController.center = new Vector3(0, 0.5f, 0); // centro ajustado
+        }
+
         if (turnResetTimer > 0f)
         {
             turnResetTimer -= Time.deltaTime;
+        }
+
+        if (isSliding)
+        {
+            slideTimer -= Time.deltaTime;
+            if (slideTimer <= 0f)
+            {
+                isSliding = false;
+                characterController.height = originalHeight;
+                characterController.center = originalCenter;
+            }
         }
     }
 
