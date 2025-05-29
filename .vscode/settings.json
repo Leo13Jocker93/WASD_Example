@@ -51,5 +51,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "WASD_Example.sln"
+    "dotnet.defaultSolution": "Base_WASD.sln"
 }

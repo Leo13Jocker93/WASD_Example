@@ -5,7 +5,7 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/PlatoformerGame.unity
     guid: 37a80b861b831024cb61395034afc0ba
   - enabled: 1
